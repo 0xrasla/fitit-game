@@ -65,7 +65,7 @@ class PauseOverlay extends StatelessWidget {
                 onPressed: () => game.goToMenu(),
                 child: Text(
                   'QUIT',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.orbitron(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     letterSpacing: 3,
