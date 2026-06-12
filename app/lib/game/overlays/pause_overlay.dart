@@ -32,7 +32,7 @@ class PauseOverlay extends StatelessWidget {
             children: [
               Text(
                 'PAUSED',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.orbitron(
                   fontSize: 26,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 8,
@@ -53,7 +53,7 @@ class PauseOverlay extends StatelessWidget {
                 ),
                 child: Text(
                   'RESUME',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.orbitron(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 4,
