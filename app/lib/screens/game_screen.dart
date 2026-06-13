@@ -80,13 +80,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _ticker?.start();
   }
 
-  void _loadBannerAd() {
-    _bannerAd = _adService.createBannerAd();
-    _bannerAd?.load().then((_) {
-      if (mounted) {
-        setState(() => _isBannerLoaded = true);
-      }
-    });
+  Future<void> _loadBannerAd() async {
+    // Make sure the SDK is initialized before requesting a banner; otherwise
+    // createBannerAd() returns null and the banner never loads for this session.
+    await _adService.init();
+    if (!mounted) return;
+    final banner = _adService.createBannerAd(
+      // The banner is loaded exactly once inside createBannerAd(); flip the flag
+      // only when the ad actually arrives, not when the request is merely sent.
+      onLoaded: () {
+        if (mounted) setState(() => _isBannerLoaded = true);
+      },
+      onFailed: () {
+        if (mounted) {
+          setState(() {
+            _isBannerLoaded = false;
+            _bannerAd = null;
+          });
+        }
+      },
+    );
+    if (banner != null) {
+      setState(() => _bannerAd = banner);
+    }
   }
 
   void _onTick(Duration elapsed) {

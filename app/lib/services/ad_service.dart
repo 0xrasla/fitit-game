@@ -39,16 +39,21 @@ class AdService {
   // --------------------------------------------------------------------------
   // Banner
   // --------------------------------------------------------------------------
-  BannerAd? createBannerAd() {
+  BannerAd? createBannerAd({
+    VoidCallback? onLoaded,
+    VoidCallback? onFailed,
+  }) {
     if (!_initialized) return null;
     final banner = BannerAd(
       adUnitId: _bannerId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
+        onAdLoaded: (ad) => onLoaded?.call(),
         onAdFailedToLoad: (ad, error) {
           debugPrint('Banner failed to load: $error');
           ad.dispose();
+          onFailed?.call();
         },
       ),
     );
