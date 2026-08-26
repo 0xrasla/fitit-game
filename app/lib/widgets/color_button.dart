@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/game_color.dart';
 
 class ColorButton extends StatefulWidget {
@@ -27,11 +28,11 @@ class _ColorButtonState extends State<ColorButton>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 70),
-      reverseDuration: const Duration(milliseconds: 160),
+      duration: const Duration(milliseconds: 60),
+      reverseDuration: const Duration(milliseconds: 140),
     );
-    _scale = Tween<double>(begin: 1.0, end: 0.90).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeIn),
+    _scale = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
     );
   }
 
@@ -55,6 +56,9 @@ class _ColorButtonState extends State<ColorButton>
 
   @override
   Widget build(BuildContext context) {
+    final color = widget.gameColor.color;
+    final textColor = _contrastingColor(color);
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -65,25 +69,83 @@ class _ColorButtonState extends State<ColorButton>
           width: widget.size,
           height: widget.size,
           decoration: BoxDecoration(
-            color: widget.gameColor.color,
-            borderRadius: BorderRadius.circular(widget.size * 0.25),
+            borderRadius: BorderRadius.circular(widget.size * 0.28),
+            gradient: LinearGradient(
+              colors: [
+                Color.alphaBlend(Colors.white.withValues(alpha: 0.25), color),
+                color,
+                Color.alphaBlend(Colors.black.withValues(alpha: 0.20), color),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             boxShadow: [
+              // Outer neon aura glow
               BoxShadow(
-                color: widget.gameColor.color.withValues(alpha: 0.45),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                color: color.withValues(alpha: 0.55),
+                blurRadius: 18,
+                spreadRadius: 1,
+                offset: const Offset(0, 4),
+              ),
+              // 3D Bottom depth shadow
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 6,
+                offset: const Offset(0, 8),
               ),
             ],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            widget.gameColor.displayLabel,
-            style: TextStyle(
-              color: _contrastingColor(widget.gameColor.color),
-              fontWeight: FontWeight.w900,
-              fontSize: widget.size * 0.22,
-              letterSpacing: 0.5,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.35),
+              width: 2,
             ),
+          ),
+          child: Stack(
+            children: [
+              // Glossy top sheen highlight curve
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: widget.size * 0.38,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(widget.size * 0.26),
+                    ),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ),
+              Center(
+                child: Text(
+                  widget.gameColor.displayLabel,
+                  style: GoogleFonts.rubik(
+                    textStyle: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: widget.size * 0.22,
+                      letterSpacing: 1.0,
+                      shadows: [
+                        Shadow(
+                          color: textColor == Colors.white
+                              ? Colors.black.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -92,6 +154,7 @@ class _ColorButtonState extends State<ColorButton>
 
   Color _contrastingColor(Color background) {
     final luminance = background.computeLuminance();
-    return luminance > 0.5 ? Colors.black87 : Colors.white;
+    return luminance > 0.45 ? Colors.black : Colors.white;
   }
 }
+

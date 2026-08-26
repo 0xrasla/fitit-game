@@ -8,6 +8,7 @@ class AudioService {
 
   final StorageService _storage = StorageService();
   bool _initialized = false;
+  final Map<String, AudioPool> _pools = {};
 
   Future<void> init() async {
     if (_initialized) return;
@@ -20,6 +21,15 @@ class AudioService {
         'tap.wav',
         'bgm.wav',
       ]);
+
+      // Pre-create reusable audio pools for high-frequency SFX to prevent
+      // creating unmanaged AudioPlayer instances during rapid gameplay taps.
+      _pools['tap.wav'] = await FlameAudio.createPool('tap.wav', minPlayers: 2, maxPlayers: 4);
+      _pools['correct.wav'] = await FlameAudio.createPool('correct.wav', minPlayers: 2, maxPlayers: 4);
+      _pools['wrong.wav'] = await FlameAudio.createPool('wrong.wav', minPlayers: 1, maxPlayers: 2);
+      _pools['tick.wav'] = await FlameAudio.createPool('tick.wav', minPlayers: 1, maxPlayers: 2);
+      _pools['game_over.wav'] = await FlameAudio.createPool('game_over.wav', minPlayers: 1, maxPlayers: 2);
+
       _initialized = true;
     } catch (e) {
       // Audio assets are optional; the game works without them.
@@ -36,11 +46,11 @@ class AudioService {
     }
   }
 
-  void playCorrect() => _play('correct.wav');
-  void playWrong() => _play('wrong.wav');
-  void playTick() => _play('tick.wav');
-  void playGameOver() => _play('game_over.wav');
-  void playClick() => _play('tap.wav');
+  void playCorrect() => _play('correct.wav', volume: 0.7);
+  void playWrong() => _play('wrong.wav', volume: 0.7);
+  void playTick() => _play('tick.wav', volume: 0.5);
+  void playGameOver() => _play('game_over.wav', volume: 0.8);
+  void playClick() => _play('tap.wav', volume: 0.6);
 
   Future<void> playBgm() async {
     if (!_initialized || !isEnabled) return;
@@ -60,12 +70,25 @@ class AudioService {
     }
   }
 
-  void _play(String file) {
+  void _play(String file, {double volume = 0.6}) {
     if (!_initialized || !isEnabled) return;
     try {
-      FlameAudio.play(file, volume: 0.6);
+      final pool = _pools[file];
+      if (pool != null) {
+        pool.start(volume: volume);
+      } else {
+        FlameAudio.play(file, volume: volume);
+      }
     } catch (_) {
       // Ignore missing audio assets.
     }
   }
+
+  void dispose() {
+    for (final pool in _pools.values) {
+      pool.dispose();
+    }
+    _pools.clear();
+  }
 }
+

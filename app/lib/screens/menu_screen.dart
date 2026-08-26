@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/game_color.dart';
 import '../services/ad_service.dart';
 import '../services/audio_service.dart';
@@ -35,15 +36,12 @@ class _MenuScreenState extends State<MenuScreen>
     )..repeat();
     _loadData();
     AdService().init();
-    _demoTimer = Timer.periodic(
-      const Duration(milliseconds: 1200),
-      (_) {
-        if (!mounted) return;
-        setState(() {
-          _demoWordIndex = (_demoWordIndex + 1) % gameColors.length;
-        });
-      },
-    );
+    _demoTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) {
+      if (!mounted) return;
+      setState(() {
+        _demoWordIndex = (_demoWordIndex + 1) % gameColors.length;
+      });
+    });
   }
 
   Future<void> _loadData() async {
@@ -62,9 +60,9 @@ class _MenuScreenState extends State<MenuScreen>
     _audio.playClick();
     await _audio.stopBgm();
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const GameScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const GameScreen()));
     if (!mounted) return;
     await _audio.playBgm();
     _loadData();
@@ -96,65 +94,80 @@ class _MenuScreenState extends State<MenuScreen>
     final wordColor = gameColors[(_demoWordIndex + 2) % gameColors.length];
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0D0B18),
       body: AnimatedBuilder(
         animation: _animController,
         builder: (context, _) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                colors: const [
-                  Color(0xFF1A1A2E),
-                  Color(0xFF121212),
-                ],
-                radius: 1.3,
-                focal: Alignment(
-                  sin(_animController.value * pi * 2) * 0.3,
-                  cos(_animController.value * pi * 2) * 0.3,
+          return Stack(
+            children: [
+              // Layer 1: Game background texture image
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/game_bg.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),
-            ),
-            child: Stack(
-              children: [
-                CustomPaint(
-                  painter: _BubblePainter(
-                    progress: _animController.value,
-                    colorValues: const [
-                      Colors.amberAccent,
-                      Colors.redAccent,
-                      Colors.blueAccent,
-                      Colors.greenAccent,
-                      Colors.deepPurpleAccent,
-                      Colors.orangeAccent,
-                    ],
-                  ),
-                  size: size,
-                ),
-                SafeArea(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: size.height * 0.04,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildTitleBlock(size),
-                          SizedBox(height: size.height * 0.04),
-                          _buildDemoCard(wordColor, inkColor),
-                          SizedBox(height: size.height * 0.03),
-                          _buildHighScoreCard(),
-                          SizedBox(height: size.height * 0.04),
-                          _buildPlayButton(),
-                          const SizedBox(height: 12),
-                          _buildSoundToggle(),
-                        ],
+              // Layer 2: Dynamic radial light beam
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.amberAccent.withValues(alpha: 0.15),
+                        Colors.deepPurpleAccent.withValues(alpha: 0.25),
+                        Colors.black.withValues(alpha: 0.85),
+                      ],
+                      radius: 1.4,
+                      focal: Alignment(
+                        sin(_animController.value * pi * 2) * 0.35,
+                        cos(_animController.value * pi * 2) * 0.35,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              // Layer 3: Floating particle bubbles
+              CustomPaint(
+                painter: _BubblePainter(
+                  progress: _animController.value,
+                  colorValues: const [
+                    Colors.amberAccent,
+                    Colors.redAccent,
+                    Colors.blueAccent,
+                    Colors.greenAccent,
+                    Colors.deepPurpleAccent,
+                    Colors.orangeAccent,
+                  ],
+                ),
+                size: size,
+              ),
+              // Layer 4: Main Menu Cards & Controls
+              SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: size.height * 0.04,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildTitleBlock(size),
+                        SizedBox(height: size.height * 0.04),
+                        _buildDemoCard(wordColor, inkColor),
+                        SizedBox(height: size.height * 0.03),
+                        _buildHighScoreCard(),
+                        SizedBox(height: size.height * 0.04),
+                        _buildPlayButton(),
+                        const SizedBox(height: 14),
+                        _buildSoundToggle(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -164,25 +177,51 @@ class _MenuScreenState extends State<MenuScreen>
   Widget _buildTitleBlock(Size size) {
     return Column(
       children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.rubik(
-                textStyle: TextStyle(
-                  fontSize: size.width * 0.17,
-                  fontWeight: FontWeight.w900,
-                  height: 1.0,
-                  letterSpacing: 2,
+        Container(
+          constraints: BoxConstraints(
+            maxHeight: size.height * 0.22,
+            maxWidth: size.width * 0.72,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.amberAccent.withValues(alpha: 0.18),
+                blurRadius: 30,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => FittedBox(
+                fit: BoxFit.scaleDown,
+                child: RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.rubik(
+                      textStyle: TextStyle(
+                        fontSize: size.width * 0.17,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: 'INK',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      TextSpan(
+                        text: 'STINCT',
+                        style: TextStyle(color: Colors.amberAccent),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              children: const [
-                TextSpan(text: 'INK', style: TextStyle(color: Colors.white)),
-                TextSpan(
-                  text: 'STINCT',
-                  style: TextStyle(color: Colors.amberAccent),
-                ),
-              ],
             ),
           ),
         ),
@@ -288,10 +327,7 @@ class _MenuScreenState extends State<MenuScreen>
             color: color,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 10,
-              ),
+              BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 10),
             ],
             border: isCorrect
                 ? Border.all(
@@ -302,8 +338,11 @@ class _MenuScreenState extends State<MenuScreen>
           ),
           child: isCorrect
               ? const Icon(Icons.check_rounded, color: Colors.white, size: 26)
-              : const Icon(Icons.close_rounded,
-                  color: Colors.white54, size: 22),
+              : const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white54,
+                  size: 22,
+                ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -350,8 +389,11 @@ class _MenuScreenState extends State<MenuScreen>
         children: [
           Row(
             children: [
-              Icon(Icons.emoji_events_rounded,
-                  size: 22, color: Colors.amberAccent.withValues(alpha: 0.7)),
+              Icon(
+                Icons.emoji_events_rounded,
+                size: 22,
+                color: Colors.amberAccent.withValues(alpha: 0.7),
+              ),
               const SizedBox(width: 10),
               Text(
                 'HIGH SCORE',
@@ -388,45 +430,71 @@ class _MenuScreenState extends State<MenuScreen>
   }
 
   Widget _buildPlayButton() {
+    final glowIntensity = 18 + sin(_animController.value * pi * 2) * 8;
+
     return SizedBox(
       width: double.infinity,
-      height: 64,
+      height: 66,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFFFD54F),
+              Color(0xFFFFB300),
+              Color(0xFFFF8F00),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.amberAccent.withValues(alpha: 0.3),
-              blurRadius: 20 + sin(_animController.value * pi * 2) * 6,
-              spreadRadius: 0,
+              color: Colors.amberAccent.withValues(alpha: 0.5),
+              blurRadius: glowIntensity,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 8),
             ),
           ],
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.4),
+            width: 2,
+          ),
         ),
         child: ElevatedButton(
           onPressed: _startGame,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.amberAccent,
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
             foregroundColor: Colors.black,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
             ),
-            elevation: 0,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'PLAY',
+                'PLAY NOW',
                 style: GoogleFonts.rubik(
                   textStyle: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 3,
+                    color: Colors.black,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              const Icon(Icons.play_arrow_rounded, size: 28),
+              const SizedBox(width: 12),
+              const Icon(
+                Icons.play_arrow_rounded,
+                size: 32,
+                color: Colors.black,
+              ),
             ],
           ),
         ),
@@ -455,7 +523,6 @@ class _MenuScreenState extends State<MenuScreen>
       ),
     );
   }
-
 }
 
 class _BubblePainter extends CustomPainter {
@@ -470,15 +537,18 @@ class _BubblePainter extends CustomPainter {
     final rng = Random(0);
 
     for (int i = 0; i < 18; i++) {
-      final x = (rng.nextDouble() * size.width) +
+      final x =
+          (rng.nextDouble() * size.width) +
           sin(progress * pi * 2 + i * 1.7) * 20;
-      final y = (rng.nextDouble() * size.height) +
+      final y =
+          (rng.nextDouble() * size.height) +
           cos(progress * pi * 2 + i * 1.3) * 20;
       final radius = rng.nextDouble() * 28 + 6;
       final opacity = (sin(progress * pi * 2 + i * 0.9) + 1) / 2 * 0.12;
 
-      paint.color =
-          colorValues[i % colorValues.length].withValues(alpha: opacity);
+      paint.color = colorValues[i % colorValues.length].withValues(
+        alpha: opacity,
+      );
       canvas.drawCircle(Offset(x % size.width, y % size.height), radius, paint);
     }
   }

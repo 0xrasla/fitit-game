@@ -63,6 +63,8 @@ flutter:
   assets:
     - assets/audio/
     - assets/logo.png
+    - assets/trophy.png
+    - assets/game_bg.jpg
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
